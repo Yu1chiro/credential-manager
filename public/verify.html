@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Kredensial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen">
+    <!-- [Previous HTML remains the same until script tag] -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
+            <div class="flex justify-center">
+                <svg class="w-32 h-auto mb-5" fill="#3e7ff5" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 60.731 60.731" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M27.838,54.409V39.227H7.594v-2.532h20.245c0-2.719,2.158-4.945,4.85-5.055v-0.005H7.594v-2.532h25.19 c0.137-1.821,0.644-3.526,1.465-5.059H7.591v-2.532h28.413c2.356-2.628,5.741-4.319,9.544-4.319V8.985 c0-2.857-2.333-5.19-5.188-5.19H5.186C2.333,3.795,0,6.128,0,8.985v42.762c0,2.858,2.333,5.189,5.186,5.189h23.353 C28.105,56.195,27.838,55.333,27.838,54.409z M7.594,13.918h30.366v2.532H7.594V13.918z"></path> <path d="M58.204,34.162h-2.319v-4.103c0-5.701-4.638-10.339-10.334-10.339c-5.695,0-10.333,4.634-10.333,10.339v4.103h-2.319 c-1.393,0-2.53,1.134-2.53,2.532v17.715c0,1.394,1.139,2.527,2.53,2.527h25.304c1.394,0,2.529-1.134,2.529-2.527V36.694 C60.734,35.296,59.595,34.162,58.204,34.162z M39.645,30.059c0-3.259,2.65-5.908,5.905-5.908c3.256,0,5.906,2.652,5.906,5.908 v4.103H39.645V30.059L39.645,30.059z"></path> </g> </g> </g></svg>
+            </div>
+            <div class="mb-6">
+                <label class="block text-center text-black text-2xl font-bold mb-2" for="verifyPin">
+                    Masukkan PIN 
+                </label>
+                <input
+                    type="password"
+                    id="verifyPin"
+                    inputmode="numeric"
+                    pattern="\d*"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Masukkan PIN"
+                />
+            </div>
+
+            <button
+                id="verifyBtn"
+                class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-xl transition duration-300 transform hover:scale-105"
+            >
+                Verifikasi
+            </button>
+
+             <!-- Loading Indicator -->
+             <div id="verifyLoadingIndicator" class="hidden mb-4 mt-5">
+                <div class="flex items-center justify-center space-x-2">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <span class="text-blue-500 font-medium">Verification.......</span>
+                </div>
+            </div>
+            <div id="credentialResult" class="hidden mt-6">
+                <div class="bg-gradient-to-r from-green-500 to-blue-600 p-6 rounded-xl shadow-inner">
+                    <h3 class="font-bold text-white mb-3">Kredensial Akun Anda :</h3>
+                    <div class="animate-fade-in">
+                        <p id="credentialText" class="prose text-gray-600 break-words bg-white p-2 rounded-lg shadow-inner"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- alert -->
+     <!-- Modal Alert -->
+<div id="alertModal" class="fixed top-5 right-5 z-50 hidden">
+    <div class="bg-white border-l-4 border-red-500 p-4 rounded-lg shadow-lg flex items-start">
+        <div class="flex-1">
+            <p id="alertMessage" class="text-gray-800"></p>
+        </div>
+        <button id="closeAlert" class="ml-4 text-red-600 hover:text-red-800 font-bold">✕</button>
+  <script>
+    document.getElementById('verifyBtn').addEventListener('click', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const encryptedId = urlParams.get('id');
+    const pin = document.getElementById('verifyPin').value;
+
+    if (!encryptedId || !pin) {
+        showAlert('Data tidak valid');
+        return;
+    }
+
+    const loadingIndicator = document.getElementById('verifyLoadingIndicator');
+    const verifyBtn = document.getElementById('verifyBtn');
+    loadingIndicator.classList.remove('hidden');
+    verifyBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/verify-credential', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                userId: encryptedId,
+                pin 
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Respons server tidak valid');
+        }
+
+        const data = await response.json();
+        
+        if (data.credential) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Bersihkan dan format credential
+            const cleanedContent = cleanCredentialContent(data.credential);
+            
+            // Tampilkan hasil
+            const resultDiv = document.getElementById('credentialResult');
+            const credentialText = document.getElementById('credentialText');
+            
+            // Gunakan innerHTML untuk mempertahankan format
+            credentialText.innerHTML = formatCredential(cleanedContent);
+            resultDiv.classList.remove('hidden');
+        } else {
+            showAlert('PIN salah atau data tidak ditemukan');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Terjadi kesalahan: ' + error.message);
+    } finally {
+        loadingIndicator.classList.add('hidden');
+        verifyBtn.disabled = false;
+    }
+});
+
+
+function cleanCredentialContent(htmlContent) {
+    if (!htmlContent) return '';
+    
+    try {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        
+        function processNode(node) {
+            // Handle block elements (p, div, etc.)
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const tag = node.tagName.toLowerCase();
+                
+                // Special handling for different elements
+                switch (tag) {
+                    case 'p':
+                    case 'div':
+                        return node.innerHTML.trim() + '\n\n';
+                    case 'br':
+                        return '\n';
+                    case 'ul':
+                    case 'ol':
+                        return Array.from(node.children)
+                            .map(li => '• ' + li.textContent.trim())
+                            .join('\n') + '\n\n';
+                    default:
+                        // For other elements, process their children
+                        return Array.from(node.childNodes)
+                            .map(child => processNode(child))
+                            .join('');
+                }
+            }
+            
+            // Handle text nodes
+            if (node.nodeType === Node.TEXT_NODE) {
+                return node.textContent;
+            }
+            
+            return '';
+        }
+        
+        let cleanText = processNode(tempDiv);
+        
+        // Normalize spacing while preserving intentional line breaks
+        cleanText = cleanText
+            .replace(/\n{3,}/g, '\n\n')     // Convert multiple line breaks to double
+            .replace(/[ \t]+/g, ' ')         // Normalize horizontal whitespace
+            .trim();
+        
+        return cleanText;
+    } catch (error) {
+        console.error('Error cleaning credential:', error);
+        return htmlContent;
+    }
+}
+
+function formatCredential(cleanText) {
+    if (!cleanText) return '';
+    
+    try {
+        // Split into paragraphs while preserving intentional line breaks
+        const paragraphs = cleanText.split('\n\n').filter(p => p.trim());
+        
+        return paragraphs.map(paragraph => {
+            const lines = paragraph.split('\n');
+            
+            return lines.map(line => {
+                const trimmedLine = line.trim();
+                
+                if (trimmedLine.startsWith('•')) {
+                    // Format list items
+                    return `<ul class="list-disc ml-6 my-2">
+                        <li class="text-gray-700">${trimmedLine.substring(1).trim()}</li>
+                    </ul>`;
+                } else if (trimmedLine.length > 0) {
+                    // Format regular paragraphs
+                    return `<p class="my-2 text-gray-700">${trimmedLine}</p>`;
+                }
+                return '';
+            }).join('');
+        }).join('\n');
+    } catch (error) {
+        console.error('Error formatting credential:', error);
+        return cleanText;
+    }
+}
+
+function showAlert(message) {
+    const alertModal = document.getElementById('alertModal');
+    const alertMessage = document.getElementById('alertMessage');
+    
+    if (alertModal && alertMessage) {
+        alertMessage.textContent = message;
+        alertModal.classList.remove('hidden');
+
+        setTimeout(() => {
+            alertModal.classList.add('hidden');
+        }, 3000);
+    } else {
+        console.error('Alert modal elements not found');
+        alert(message); // Fallback ke alert standar
+    }
+}
+
+// Event untuk menutup modal alert
+document.getElementById('closeAlert')?.addEventListener('click', () => {
+    document.getElementById('alertModal')?.classList.add('hidden');
+});
+  </script>
+</body>
+</html>

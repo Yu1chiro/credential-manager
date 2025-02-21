@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credential Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+    <style>
+        .ck.ck-editor__main > .ck-editor__editable {
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.ck.ck-editor {
+    width: 100% !important;
+}
+
+.ck-rounded-corners .ck.ck-editor__main > .ck-editor__editable,
+.ck.ck-editor__main > .ck-editor__editable.ck-rounded-corners {
+    border-radius: 0.75rem;
+}
+
+.ck.ck-toolbar {
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-animate {
+            background-size: 200% 200%;
+            animation: gradient 15s ease infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen gradient-animate">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Credential Manager</h1>
+                <p class="text-gray-600">Generate QR Code Aman untuk Kredensial Anda</p>
+            </div>
+            
+            <!-- Form Input -->
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="credential">
+                        Kredensial
+                    </label>
+                    <!-- Container CKEditor dengan kelas styling tambahan -->
+                    <div class="min-h-[200px] border border-gray-300 rounded-xl" id="credential"></div>
+                </div>
+            </div>
+
+                <!-- Image Upload -->
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="qrImage">
+                        Logo QR Code (opsional)
+                    </label>
+                    <div class="flex items-center justify-center w-full">
+                        <label class="flex flex-col w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer hover:bg-gray-50 transition duration-200">
+                            <div class="flex flex-col items-center justify-center pt-7">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                <p class="pt-1 text-sm tracking-wider text-gray-400 group-hover:text-gray-600">
+                                    Pilih logo untuk QR code
+                                </p>
+                            </div>
+                            <input type="file" id="qrImage" accept="image/*" class="opacity-0" />
+                        </label>
+                    </div>
+                    <div id="imagePreview" class="hidden mt-4 flex justify-center">
+                        <img id="previewImg" class="max-h-32 rounded-lg" />
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button
+                    id="generateBtn"
+                    class="mb-5 w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl transition duration-300 transform hover:scale-105 hover:shadow-lg"
+                >
+                    <div class="flex items-center justify-center space-x-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Generate QR Code</span>
+                    </div>
+                </button>
+
+                <!-- Loading Indicator -->
+                <div id="loadingIndicator" class="hidden mt-3">
+                    <div class="flex items-center justify-center space-x-2 animate-pulse">
+                        <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-blue-500 rounded-full animation-delay-200"></div>
+                        <div class="w-3 h-3 bg-blue-500 rounded-full animation-delay-400"></div>
+                        <span class="text-blue-500 font-medium">Saving credential.....</span>
+                    </div>
+                </div>
+
+                <!-- QR Code Container -->
+                <div id="qrcodeContainer" class="hidden">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-8 rounded-xl shadow-inner">
+                        <div class="relative flex justify-center mb-6">
+                            <div id="qrcode" class="relative bg-white p-4 rounded-lg shadow-md"></div>
+                            <img id="logoOverlay" class="absolute hidden" style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2;" />
+                        </div>
+                        
+                        <div class="flex justify-center space-x-4">
+                            <button
+                                id="downloadPNG"
+                                class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-lg hover:from-green-600 hover:to-green-700 transition duration-300 flex items-center space-x-2 hover:shadow-lg"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span>Download QR Code</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PIN Modal -->
+            <div id="pinModal" class="hidden fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full backdrop-blur-sm z-50">
+                <div class="relative top-20 mx-auto p-8 border w-96 shadow-2xl rounded-2xl bg-white">
+                    <div class="mt-3 text-center">
+                        <div class="flex justify-center">
+                            <svg class="w-32 h-auto mb-5" fill="#3e7ff5" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 60.731 60.731" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M27.838,54.409V39.227H7.594v-2.532h20.245c0-2.719,2.158-4.945,4.85-5.055v-0.005H7.594v-2.532h25.19 c0.137-1.821,0.644-3.526,1.465-5.059H7.591v-2.532h28.413c2.356-2.628,5.741-4.319,9.544-4.319V8.985 c0-2.857-2.333-5.19-5.188-5.19H5.186C2.333,3.795,0,6.128,0,8.985v42.762c0,2.858,2.333,5.189,5.186,5.189h23.353 C28.105,56.195,27.838,55.333,27.838,54.409z M7.594,13.918h30.366v2.532H7.594V13.918z"></path> <path d="M58.204,34.162h-2.319v-4.103c0-5.701-4.638-10.339-10.334-10.339c-5.695,0-10.333,4.634-10.333,10.339v4.103h-2.319 c-1.393,0-2.53,1.134-2.53,2.532v17.715c0,1.394,1.139,2.527,2.53,2.527h25.304c1.394,0,2.529-1.134,2.529-2.527V36.694 C60.734,35.296,59.595,34.162,58.204,34.162z M39.645,30.059c0-3.259,2.65-5.908,5.905-5.908c3.256,0,5.906,2.652,5.906,5.908 v4.103H39.645V30.059L39.645,30.059z"></path> </g> </g> </g></svg>
+                        </div>
+                        <h3 class="text-xl leading-6 font-bold text-gray-900 mb-2">Masukkan PIN</h3>
+                        <p class="text-sm text-gray-500 mb-4">PIN ini akan digunakan untuk mengakses kredensial Anda</p>
+                        <div class="mt-4 px-7 py-3">
+                            <input
+                                type="password"
+                                id="pin"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest"
+                                placeholder="Masukkan PIN"
+                                inputmode="numeric"
+                                pattern="\d*"
+                                maxlength="6"
+                            />
+                        </div>
+                        <div id="pinLoadingIndicator" class="hidden mt-4 flex justify-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                        </div>
+                        <div class="items-center px-4 py-3">
+                            <button
+                                id="submitPin"
+                                class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-base font-medium rounded-xl shadow-sm hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transform hover:scale-105 transition duration-300"
+                            >
+                                Konfirmasi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        let qrcode = null;
+let editor = null;
+// Preview image upload
+document.getElementById('qrImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('previewImg');
+            previewImg.src = e.target.result;
+            document.getElementById('imagePreview').classList.remove('hidden');
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+// Inisialisasi CKEditor
+ClassicEditor
+    .create(document.querySelector('#credential'), {
+        placeholder: 'Masukkan kredensial Anda di sini...',
+        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+        removePlugins: ['CKFinderUploadAdapter', 'CKFinder', 'EasyImage', 'Image', 'ImageCaption', 'ImageStyle', 'ImageToolbar', 'ImageUpload', 'MediaEmbed'],
+    })
+    .then(newEditor => {
+        editor = newEditor;
+        
+        // Tambahan styling untuk container editor
+        const editorElement = editor.ui.getEditableElement();
+        const editorContainer = editor.ui.view.element;
+        
+        editorContainer.style.width = '100%';
+        editorElement.style.minHeight = '200px';
+        editorElement.style.maxHeight = '400px';
+        editorElement.style.padding = '1rem';
+    })
+    .catch(error => {
+        console.error(error);
+    });
+
+function createQRCode(text, logoUrl = null) {
+    const qrcodeDiv = document.getElementById('qrcode');
+    qrcodeDiv.innerHTML = '';
+    
+    qrcode = new QRCode(qrcodeDiv, {
+        text: text,
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    if (logoUrl) {
+        const logoOverlay = document.getElementById('logoOverlay');
+        logoOverlay.src = logoUrl;
+        logoOverlay.classList.remove('hidden');
+        logoOverlay.style.width = '50px';
+        logoOverlay.style.height = '50px';
+        logoOverlay.style.objectFit = 'contain';
+        logoOverlay.style.backgroundColor = 'white';
+        logoOverlay.style.padding = '5px';
+        logoOverlay.style.borderRadius = '8px';
+    }
+}
+
+async function downloadQRCode() {
+    try {
+        const qrContainer = document.getElementById('qrcode');
+        const logoOverlay = document.getElementById('logoOverlay');
+        const qrImage = qrContainer.querySelector('img');
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scale = 4;
+        const padding = 40 * scale;
+        const qrSize = 256 * scale;
+        
+        canvas.width = qrSize + (padding * 2);
+        canvas.height = qrSize + (padding * 2);
+        
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        const loadImage = (src) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        };
+
+        const gradientOuter = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradientOuter.addColorStop(0, '#4338CA');
+        gradientOuter.addColorStop(1, '#7E22CE');
+        ctx.fillStyle = gradientOuter;
+        roundRect(ctx, 0, 0, canvas.width, canvas.height, 32 * scale);
+        ctx.fill();
+
+        const innerPadding = 20 * scale;
+        ctx.fillStyle = 'white';
+        roundRect(ctx, 
+            innerPadding, 
+            innerPadding, 
+            canvas.width - (innerPadding * 2), 
+            canvas.height - (innerPadding * 2), 
+            24 * scale
+        );
+        ctx.fill();
+
+        const qrCodeImage = await loadImage(qrImage.src);
+        const qrX = (canvas.width - qrSize) / 2;
+        const qrY = (canvas.height - qrSize) / 2;
+        ctx.drawImage(qrCodeImage, qrX, qrY, qrSize, qrSize);
+        
+        if (!logoOverlay.classList.contains('hidden')) {
+            const logo = await loadImage(logoOverlay.src);
+            const logoSize = 60 * scale;
+            const logoX = (canvas.width - logoSize) / 2;
+            const logoY = (canvas.height - logoSize) / 2;
+            
+            ctx.save();
+            ctx.beginPath();
+            roundRect(ctx, logoX, logoY, logoSize, logoSize, 10 * scale);
+            ctx.clip();
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(logoX, logoY, logoSize, logoSize);
+            
+            ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+            ctx.restore();
+        }
+        
+        const link = document.createElement('a');
+        link.download = 'credential-qrcode.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+    } catch (error) {
+        console.error('Error downloading QR code:', error);
+        alert('Terjadi kesalahan saat mengunduh QR code');
+    }
+}
+
+document.getElementById('downloadPNG').addEventListener('click', downloadQRCode);
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+    document.getElementById('pinModal').classList.remove('hidden');
+});
+
+document.getElementById('submitPin').addEventListener('click', async () => {
+    // Mengambil data dari CKEditor
+    const credential = editor.getData();
+    const pin = document.getElementById('pin').value;
+    const fileInput = document.getElementById('qrImage');
+
+    if (!credential || !pin) {
+        alert('Silakan isi kredensial dan PIN');
+        return;
+    }
+
+    if (pin.length < 6) {
+        alert('PIN harus 6 digit');
+        return;
+    }
+
+    document.getElementById('pinLoadingIndicator').classList.remove('hidden');
+    document.getElementById('submitPin').disabled = true;
+
+    try {
+        const response = await fetch('/api/save-credential', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ credential, pin }),
+        });
+
+        const data = await response.json();
+        
+        if (data.userId) {
+            document.getElementById('pinModal').classList.add('hidden');
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            
+            let logoUrl = null;
+            if (fileInput.files && fileInput.files[0]) {
+                logoUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(fileInput.files[0]);
+                });
+            }
+
+            createQRCode(`${window.location.origin}/verify.html?id=${data.userId}`, logoUrl);
+            
+            setTimeout(() => {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('qrcodeContainer').classList.remove('hidden');
+                editor.setData(''); // Reset CKEditor
+                document.getElementById('pin').value = '';
+            }, 1000);
+        }
+    } catch (error) {
+        alert('Terjadi kesalahan: ' + error.message);
+    } finally {
+        document.getElementById('pinLoadingIndicator').classList.add('hidden');
+        document.getElementById('submitPin').disabled = false;
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('pinModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.add('hidden');
+    }
+});
+    </script>
+</body>
+</html>
