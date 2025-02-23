@@ -26,7 +26,7 @@ try {
     });
 
     if (!response.ok) {
-        throw new Error('Respons server tidak valid');
+        throw new Error('PIN yang anda masukkan salah');
     }
 
     const data = await response.json();
@@ -49,7 +49,7 @@ try {
     }
 } catch (error) {
     console.error('Error:', error);
-    showAlert('Terjadi kesalahan: ' + error.message);
+    showAlert('Access Denied ! : ' + error.message);
 } finally {
     loadingIndicator.classList.add('hidden');
     verifyBtn.disabled = false;
