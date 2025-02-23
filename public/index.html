@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Credential Manager</title>
-    <link rel="shortcut icon" href="/logo.png" type="image/x-icon">
+    <link rel="shortcut icon" href="/secure.png" type="image/x-icon">
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -43,12 +43,13 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen gradient-animate">
+<body class="min-h-screen bg-cover bg-center" style="background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/bg.png'); background-size: cover; background-position: center;">
+
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-2xl mx-auto bg-gradient-to-r from-blue-500 to-purple-600 backdrop-blur-sm rounded-2xl shadow-xl p-8">
             <div class="text-center mb-8">
                 <div class="flex justify-center mb-5">
-                    <img src="/logo.png" width="150px" height="auto" class="rounded-lg" alt="">
+                    <img src="/secure.png" width="150px" height="auto" class="rounded-lg" alt="">
                 </div>
                 <h1 class="text-2xl font-bold text-white mb-5">QR Credential Manager</h1>
                 <a href="readme.html" class="px-2.5 shadow-lg font-semibold text-white py-2.5 bg-green-600 rounded-lg">Read Documentation 🚀</a>
@@ -57,7 +58,7 @@
             <!-- Form Input -->
             <div class="space-y-6 mb-5">
                 <div class="bg-white p-6 rounded-xl shadow-sm">
-                    <label class="block text-black text-sm font-bold mb-2" for="credential">
+                    <label class="block text-black text-xl font-bold mb-2" for="credential">
                         Your Credential account
                     </label>
                     <!-- Container CKEditor dengan kelas styling tambahan -->
@@ -67,7 +68,7 @@
 
                 <!-- Image Upload -->
                 <div class="bg-white p-6 rounded-xl shadow-sm mb-5">
-                    <label class="block text-black text-sm font-bold mb-2" for="qrImage">
+                    <label class="block text-black text-xl font-bold mb-2" for="qrImage">
                         Your Img (Optional)
                     </label>
                     <div class="flex items-center justify-center w-full">
@@ -91,7 +92,7 @@
                 <!-- Generate Button -->
                 <button
                     id="generateBtn"
-                    class="mb-5 w-full bg-gradient-to-r from-green-600 to-green-800 hover:from-green-600 hover:to-green-800 text-white font-bold py-4 px-6 rounded-xl transition duration-300 transform hover:scale-105 hover:shadow-lg"
+                    class="mb-5 w-full bg-gradient-to-r cursor-pointer from-green-600 to-green-800 hover:from-green-600 hover:to-green-800 text-white font-bold py-4 px-6 rounded-xl transition duration-300 transform hover:scale-105 hover:shadow-lg"
                 >
                     <div class="flex items-center justify-center space-x-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
