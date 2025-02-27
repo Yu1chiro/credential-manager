@@ -9,9 +9,12 @@
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js/minified/introjs.min.css">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/intro.js/minified/intro.min.js"></script>
+
 
     <style>
         .ck.ck-editor__main > .ck-editor__editable {
@@ -52,17 +55,17 @@
                     <img src="/secure.png" width="150px" height="auto" class="rounded-lg" alt="">
                 </div>
                 <h1 class="text-2xl font-bold text-white mb-5">QR Credential Manager</h1>
-                <a href="readme.html" class="px-2.5 shadow-lg mb-3 font-semibold text-white py-2.5 bg-green-600 rounded-lg">Read Documentation 🚀</a>
-                <a href="/scan.html" class="px-2.5 shadow-lg mb-3 font-semibold text-white py-2.5 bg-blue-600 rounded-lg">
+                <a href="readme.html" id="readme" class="px-2.5 shadow-lg mb-3 font-semibold text-white py-2.5 bg-green-600 rounded-lg">Read Documentation 🚀</a>
+                <!-- <a href="/scan.html" class="px-2.5 shadow-lg mb-3 font-semibold text-white py-2.5 bg-blue-600 rounded-lg">
                     Scan your QR
-                </a>
+                </a> -->
                 
                 
             </div>
             
             <!-- Form Input -->
-            <div class="space-y-6 mb-5">
-                <div class="bg-white p-6 rounded-xl shadow-sm">
+            <div  class="space-y-6 mb-5">
+                <div id="important" class="bg-white p-6 rounded-xl shadow-sm">
                     <label class="block text-black text-xl font-bold mb-2" for="credential">
                         Your Credential account
                     </label>
@@ -76,7 +79,7 @@
                     <label class="block text-black text-xl font-bold mb-2" for="qrImage">
                         Your Img (Optional)
                     </label>
-                    <div class="flex items-center justify-center w-full">
+                    <div id="output" class="flex items-center justify-center w-full">
                         <label class="flex flex-col w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer hover:bg-gray-50 transition duration-200">
                             <div class="flex flex-col items-center justify-center pt-7">
                                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,12 +176,39 @@
             </div>
         </div>
     </div>
-
+    <div id="alert" class="hidden p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+        🎉 Selamat! Anda telah menyelesaikan tur. Data disimpan di localStorage.
+    </div>
 <div id="recaptcha-container"></div>
 <footer class="bg-gray-800 text-white text-center p-4">
     <p>&copy; QR Credential Manager 2025 Yuichiro. All rights reserved.</p>
     <p class="text-sm">Happy coding ❤️</p>
 </footer>
+<style>
+    .introjs-tooltip {
+        border-radius: 10px !important;
+    }
+    .introjs-nextbutton {
+        background-color: #00a63e!important;
+        text-shadow: none!important;
+        color: white!important;
+        font-weight: 500;
+    }
+    .introjs-prevbutton {
+        background-color: #3e7ff5!important;
+        text-shadow: none!important;
+        color: white!important;
+        font-weight: 500;
+    }
+    .introjs-button:focus {
+        border: 1px solid #015f23!important;
+    }
+    .introjs-bullets ul li a {
+        background: #00a63e!important;
+    }
+</style>
 <script defer src="/service/main.js"></script>
+<script defer src="/service/intro.js"></script>
+
 </body>
 </html>
